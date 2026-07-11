@@ -12,12 +12,15 @@ interface NumberGridProps {
 
 // Usa auto-fill para colunas responsivas: cards de no mínimo 44px
 export function NumberGrid({ numbers, onNumberClick }: NumberGridProps) {
+  // Garantir ordenação numérica crescente
+  const sortedNumbers = [...numbers].sort((a, b) => a.number - b.number);
+
   return (
     <div
       className="grid gap-1.5"
       style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(44px, 1fr))' }}
     >
-      {numbers.map((num) => (
+      {sortedNumbers.map((num) => (
         <NumberCard key={num.id} number={num} onClick={() => onNumberClick(num)} />
       ))}
     </div>
@@ -38,7 +41,7 @@ function NumberCard({ number, onClick }: NumberCardProps) {
     <button
       onClick={available ? onClick : undefined}
       disabled={!available}
-      aria-label={`Número ${number.id}: ${statusLabel(number.status)}`}
+      aria-label={`Número ${number.number}: ${statusLabel(number.status)}`}
       title={
         number.status !== 'available'
           ? `${statusLabel(number.status)} — ${number.buyer?.name ?? ''}`
@@ -51,7 +54,7 @@ function NumberCard({ number, onClick }: NumberCardProps) {
         number.status === 'paid'      && 'number-card-paid',
       )}
     >
-      {number.id}
+      {number.number}
     </button>
   );
 }
@@ -59,3 +62,4 @@ function NumberCard({ number, onClick }: NumberCardProps) {
 function statusLabel(status: CampaignNumber['status']): string {
   return status === 'available' ? 'Disponível' : status === 'reserved' ? 'Reservado' : 'Pago';
 }
+

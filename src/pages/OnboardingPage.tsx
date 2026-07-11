@@ -42,6 +42,7 @@ export function OnboardingPage() {
   const [campDesc, setCampDesc] = useState('');
   const [campPrice, setCampPrice] = useState(10);
   const [campNumbers, setCampNumbers] = useState(100);
+  const [campImageUrl, setCampImageUrl] = useState('');
 
   const handleNext = async () => {
     if (!client) return;
@@ -73,6 +74,7 @@ export function OnboardingPage() {
         const campaign = await campaignService.createCampaign(client.id, {
           name: campName,
           description: campDesc,
+          image_url: campImageUrl || undefined,
           price_per_number: Number(campPrice),
           total_numbers: Number(campNumbers),
           pix_key: pixKey,
@@ -170,23 +172,21 @@ export function OnboardingPage() {
                   value={telefone}
                   onChange={(e) => setTelefone(e.target.value)}
                 />
-                <div className="grid grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    placeholder="Cidade"
-                    className="input-field"
-                    value={cidade}
-                    onChange={(e) => setCidade(e.target.value)}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Estado (UF)"
-                    maxLength={2}
-                    className="input-field uppercase"
-                    value={estado}
-                    onChange={(e) => setEstado(e.target.value)}
-                  />
-                </div>
+                <input
+                  type="text"
+                  placeholder="Cidade"
+                  className="input-field"
+                  value={cidade}
+                  onChange={(e) => setCidade(e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="Estado (UF)"
+                  maxLength={2}
+                  className="input-field uppercase"
+                  value={estado}
+                  onChange={(e) => setEstado(e.target.value)}
+                />
                 <input
                   type="text"
                   placeholder="Instagram (opcional)"
@@ -272,29 +272,36 @@ export function OnboardingPage() {
                   value={campDesc}
                   onChange={(e) => setCampDesc(e.target.value)}
                 />
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xxs font-bold text-neutral-500 mb-1">PREÇO DO NÚMERO (R$)</label>
-                    <input
-                      type="number"
-                      className="input-field"
-                      value={campPrice}
-                      onChange={(e) => setCampPrice(Number(e.target.value))}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xxs font-bold text-neutral-500 mb-1">TOTAL DE NÚMEROS</label>
-                    <select
-                      className="input-field"
-                      value={campNumbers}
-                      onChange={(e) => setCampNumbers(Number(e.target.value))}
-                    >
-                      <option value={50}>50</option>
-                      <option value={100}>100</option>
-                      <option value={200}>200</option>
-                      <option value={500}>500</option>
-                    </select>
-                  </div>
+                <input
+                  type="url"
+                  placeholder="URL da Imagem da Campanha (opcional)"
+                  className="input-field"
+                  value={campImageUrl}
+                  onChange={(e) => setCampImageUrl(e.target.value)}
+                />
+                <div>
+                  <label className="block text-xxs font-bold text-neutral-500 mb-1">PREÇO DO NÚMERO (R$)</label>
+                  <input
+                    type="number"
+                    min="0.5"
+                    step="0.01"
+                    className="input-field"
+                    value={campPrice}
+                    onChange={(e) => setCampPrice(Number(e.target.value))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xxs font-bold text-neutral-500 mb-1">TOTAL DE NÚMEROS</label>
+                  <input
+                    type="number"
+                    min="10"
+                    max="100000"
+                    step="1"
+                    placeholder="Ex: 100, 200, 500..."
+                    className="input-field"
+                    value={campNumbers}
+                    onChange={(e) => setCampNumbers(Number(e.target.value))}
+                  />
                 </div>
               </div>
             </div>

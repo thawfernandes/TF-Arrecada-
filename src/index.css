@@ -99,7 +99,8 @@
   }
 
   /* Inputs */
-  .input {
+  .input,
+  .input-field {
     @apply w-full px-4 py-3 rounded-2xl border border-neutral-200 bg-white
            text-neutral-900 placeholder-neutral-400 text-sm font-normal
            transition-all duration-200 outline-none

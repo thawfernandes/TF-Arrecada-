@@ -18,6 +18,7 @@ interface CreateCampaignModalProps {
 export function CreateCampaignModal({ isOpen, onClose, clientId, onSuccess }: CreateCampaignModalProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [pricePerNumber, setPricePerNumber] = useState(10);
   const [totalNumbers, setTotalNumbers] = useState(100);
   const [pixKey, setPixKey] = useState('');
@@ -72,6 +73,7 @@ export function CreateCampaignModal({ isOpen, onClose, clientId, onSuccess }: Cr
       const success = await campaignService.createCampaign(clientId, {
         name,
         description,
+        image_url: imageUrl || undefined,
         price_per_number: Number(pricePerNumber),
         total_numbers: Number(totalNumbers),
         pix_key: pixKey,
@@ -88,6 +90,7 @@ export function CreateCampaignModal({ isOpen, onClose, clientId, onSuccess }: Cr
         // Reset
         setName('');
         setDescription('');
+        setImageUrl('');
         setPricePerNumber(10);
         setTotalNumbers(100);
         setPixKey('');
@@ -144,6 +147,19 @@ export function CreateCampaignModal({ isOpen, onClose, clientId, onSuccess }: Cr
             />
           </div>
 
+          <div>
+            <label className="block text-xs font-semibold text-neutral-700 mb-1">
+              Imagem de Capa (URL)
+            </label>
+            <input
+              type="url"
+              placeholder="https://... (link de imagem opcional)"
+              className="input-field"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+            />
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-neutral-700 mb-1">
@@ -169,17 +185,17 @@ export function CreateCampaignModal({ isOpen, onClose, clientId, onSuccess }: Cr
               </label>
               <div className="relative">
                 <ListOrdered className="absolute left-3 top-2.5 text-neutral-400" size={16} />
-                <select
+                <input
+                  type="number"
+                  required
+                  min="10"
+                  max="100000"
+                  step="1"
+                  placeholder="Ex: 100, 200, 500..."
                   className="input-field pl-9"
                   value={totalNumbers}
                   onChange={(e) => setTotalNumbers(Number(e.target.value))}
-                >
-                  <option value={50}>50 números</option>
-                  <option value={100}>100 números</option>
-                  <option value={200}>200 números</option>
-                  <option value={500}>500 números</option>
-                  <option value={1000}>1000 números</option>
-                </select>
+                />
               </div>
             </div>
           </div>
