@@ -9,7 +9,9 @@ import { ArrowLeft, ArrowRight, Check, Copy, Sparkles } from 'lucide-react';
 import { clientService } from '../services/clientService';
 import { campaignService } from '../services/campaignService';
 import { useAuth } from '../hooks/useAuth';
+import { getCampaignUrl } from '../utils/format';
 import { Layout } from '../components/Layout';
+
 
 export function OnboardingPage() {
   const navigate = useNavigate();
@@ -114,7 +116,7 @@ export function OnboardingPage() {
   };
 
   const copyLink = () => {
-    const link = `${window.location.origin}/campanha/${createdCampaignCode}`;
+    const link = getCampaignUrl(createdCampaignCode);
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -315,7 +317,7 @@ export function OnboardingPage() {
 
               <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-100 flex items-center justify-between gap-4">
                 <span className="text-xs font-semibold text-neutral-600 truncate">
-                  {`${window.location.origin}/campanha/${createdCampaignCode}`}
+                  {getCampaignUrl(createdCampaignCode)}
                 </span>
                 <button
                   onClick={copyLink}

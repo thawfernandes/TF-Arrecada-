@@ -42,8 +42,11 @@ export function maskPhone(value: string): string {
 
 /** Gera URL pública da campanha */
 export function getCampaignUrl(slug: string): string {
-  return `${window.location.origin}/campanha/${slug}`;
+  const base = import.meta.env.BASE_URL;
+  const cleanBase = base.endsWith('/') ? base : `${base}/`;
+  return `${window.location.origin}${cleanBase}campanha/${slug}`;
 }
+
 
 /** Trunca texto com ellipsis */
 export function truncate(text: string, max: number): string {

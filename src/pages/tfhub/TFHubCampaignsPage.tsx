@@ -7,7 +7,9 @@ import { useState, useEffect } from 'react';
 import { Search, Link as LinkIcon, Trash } from 'lucide-react';
 import { tfhubService } from '../../services/tfhubService';
 import { campaignService } from '../../services/campaignService';
+import { getCampaignUrl } from '../../utils/format';
 import { TFHubLayout } from './TFHubLayout';
+
 
 export function TFHubCampaignsPage() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -140,7 +142,7 @@ export function TFHubCampaignsPage() {
                       </td>
                       <td className="p-4 text-right flex items-center justify-end gap-1.5">
                         <a
-                          href={`${window.location.origin}/campanha/${c.share_code}`}
+                          href={getCampaignUrl(c.share_code)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="p-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white rounded-xl transition-colors"
@@ -148,6 +150,7 @@ export function TFHubCampaignsPage() {
                         >
                           <LinkIcon size={14} />
                         </a>
+
                         <button
                           onClick={() => handleToggleStatus(c.id, c.status)}
                           className="px-2.5 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-xs font-bold rounded-xl transition-colors"

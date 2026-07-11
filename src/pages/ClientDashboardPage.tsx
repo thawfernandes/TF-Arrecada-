@@ -10,6 +10,8 @@ import {
   TrendingUp, Users, DollarSign, RefreshCw, LogOut, CheckCircle, XCircle
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { getCampaignUrl } from '../utils/format';
+
 import { campaignService } from '../services/campaignService';
 import { LicenseWarningBanner } from '../components/LicenseWarningBanner';
 import { CreateCampaignModal } from '../components/CreateCampaignModal';
@@ -109,11 +111,12 @@ export function ClientDashboardPage() {
 
   const handleCopyLink = () => {
     if (!selectedCampaign) return;
-    const link = `${window.location.origin}/campanha/${selectedCampaign.share_code}`;
+    const link = getCampaignUrl(selectedCampaign.share_code);
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
 
   const handleLogout = async () => {
     await logout();
