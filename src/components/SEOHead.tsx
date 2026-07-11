@@ -4,6 +4,7 @@
 // ============================================================
 
 import { useEffect } from 'react';
+import { getCampaignUrl } from '../utils/format';
 
 interface SEOHeadProps {
   title: string;
@@ -38,8 +39,9 @@ export function SEOHead({ title, description, imageUrl, slug }: SEOHeadProps) {
     setMetaTag('property', 'og:description', description);
     setMetaTag('property', 'og:type', 'website');
     if (slug) {
-      setMetaTag('property', 'og:url', `${window.location.origin}/campanha/${slug}`);
+      setMetaTag('property', 'og:url', getCampaignUrl(slug));
     }
+
     if (imageUrl) {
       setMetaTag('property', 'og:image', imageUrl);
     }

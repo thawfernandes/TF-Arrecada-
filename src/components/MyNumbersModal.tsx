@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Search, Clock, CheckCircle, ArrowRight } from 'lucide-react';
 import { Modal } from './Modal';
 import { campaignService } from '../services/campaignService';
-import { maskPhone, formatDate } from '../utils/format';
+import { maskPhone, formatDate, getCampaignUrl } from '../utils/format';
 import type { MyNumberResult } from '../types';
 
 interface MyNumbersModalProps {
@@ -16,7 +16,7 @@ interface MyNumbersModalProps {
 }
 
 export function MyNumbersModal({ isOpen, onClose, initialPhone = '' }: MyNumbersModalProps) {
-  const [phone, setPhone] = useState(initialPhone);
+  const [phone, setPhone] = useState(phone => phone || initialPhone);
   const [results, setResults] = useState<MyNumberResult[]>([]);
   const [searched, setSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -63,7 +63,7 @@ export function MyNumbersModal({ isOpen, onClose, initialPhone = '' }: MyNumbers
             {isLoading ? 'Buscando...' : 'Buscar'}
           </button>
         </form>
-
+ 
         {searched && (
           <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1">
             {results.length === 0 ? (
@@ -84,12 +84,13 @@ export function MyNumbersModal({ isOpen, onClose, initialPhone = '' }: MyNumbers
                       {res.campaignName}
                     </h4>
                     <a
-                      href={`/campanha/${res.shareCode}`}
+                      href={getCampaignUrl(res.shareCode)}
                       className="text-xs text-brand-600 font-semibold flex items-center gap-1 hover:underline"
                     >
                       Acessar página <ArrowRight size={10} />
                     </a>
                   </div>
+
                   
                   <div className="grid gap-2">
                     {res.numbers.map((n) => (
