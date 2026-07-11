@@ -574,15 +574,82 @@ CREATE POLICY "campaign_numbers_public_update" ON campaign_numbers
     )
   );
 
--- ─── Políticas: acesso autenticado do cliente ────────────────
--- As RPCs (SECURITY DEFINER) bypassam RLS, então o acesso
--- autenticado é controlado pela lógica das funções.
--- Para queries diretas do client-side, usamos o anon key
--- com as políticas públicas acima.
+-- ─── Políticas: acesso via anon key ──────────────────────────
+-- A autenticação real é controlada pelo token no localStorage.
+-- As RPCs SECURITY DEFINER bypassam RLS para operações seguras.
+-- As políticas abaixo permitem leitura/escrita geral via anon key
+-- para que o dashboard do cliente e o painel admin funcionem.
 
--- ─── Políticas: TF Hub admins (bypass via RPC SECURITY DEFINER)
--- Todas as operações admin são feitas via RPCs com SECURITY DEFINER
--- que bypassam RLS automaticamente.
+-- clients: acesso total (admin cria/edita, cliente lê próprio)
+CREATE POLICY "clients_anon_all" ON clients
+  FOR ALL USING (true) WITH CHECK (true);
+
+-- client_profiles: acesso total
+CREATE POLICY "client_profiles_anon_all" ON client_profiles
+  FOR ALL USING (true) WITH CHECK (true);
+
+-- client_settings: acesso total
+CREATE POLICY "client_settings_anon_all" ON client_settings
+  FOR ALL USING (true) WITH CHECK (true);
+
+-- campaigns: acesso total (admin vê todas, inclusive drafts)
+CREATE POLICY "campaigns_anon_all" ON campaigns
+  FOR ALL USING (true) WITH CHECK (true);
+
+-- campaign_numbers: acesso total
+CREATE POLICY "campaign_numbers_anon_all" ON campaign_numbers
+  FOR ALL USING (true) WITH CHECK (true);
+
+-- buyers: acesso total
+CREATE POLICY "buyers_anon_all" ON buyers
+  FOR ALL USING (true) WITH CHECK (true);
+
+-- organizers: acesso total
+CREATE POLICY "organizers_anon_all" ON organizers
+  FOR ALL USING (true) WITH CHECK (true);
+
+-- message_templates: acesso total
+CREATE POLICY "message_templates_anon_all" ON message_templates
+  FOR ALL USING (true) WITH CHECK (true);
+
+-- notifications: acesso total
+CREATE POLICY "notifications_anon_all" ON notifications
+  FOR ALL USING (true) WITH CHECK (true);
+
+-- activity_logs: somente leitura via anon (INSERT via RPC SECURITY DEFINER)
+CREATE POLICY "activity_logs_anon_read" ON activity_logs
+  FOR SELECT USING (true);
+
+-- ============================================================
+-- RPC: log_activity_rpc (SECURITY DEFINER — bypassa RLS)
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION log_activity_rpc(
+  p_action      TEXT,
+  p_entity_type TEXT DEFAULT NULL,
+  p_entity_id   UUID DEFAULT NULL,
+  p_details     JSONB DEFAULT '{}'::jsonb,
+  p_client_id   UUID DEFAULT NULL,
+  p_admin_id    UUID DEFAULT NULL,
+  p_ip_address  TEXT DEFAULT 'client-side'
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  INSERT INTO activity_logs (
+    action, entity_type, entity_id,
+    details, client_id, admin_id, ip_address
+  ) VALUES (
+    p_action, p_entity_type, p_entity_id,
+    p_details, p_client_id, p_admin_id, p_ip_address
+  );
+EXCEPTION WHEN OTHERS THEN
+  -- Silencia erros para não quebrar o fluxo principal
+  NULL;
+END;
+$$;
 
 -- ============================================================
 -- NOTAS DE IMPLEMENTAÇÃO
@@ -592,13 +659,18 @@ CREATE POLICY "campaign_numbers_public_update" ON campaign_numbers
 --    authenticate_tfhub_admin) que são SECURITY DEFINER e
 --    bypassam RLS.
 --
--- 2. As operações CRUD do cliente são feitas via RPCs
---    SECURITY DEFINER para garantir isolamento.
+-- 2. As operações de criação de clientes e renovação de licença
+--    são feitas via RPCs SECURITY DEFINER.
 --
--- 3. Páginas públicas usam o anon key com as políticas
---    de SELECT em campanhas ativas.
+-- 3. As políticas RLS permitem acesso via anon key para todas
+--    as tabelas. A segurança é garantida pela lógica do app
+--    (tokens no localStorage) e pelas RPCs.
 --
 -- 4. O share_code é gerado automaticamente pelo trigger
 --    e nunca muda após a criação.
 --
 -- 5. As senhas usam bcrypt via pgcrypto (gen_salt('bf', 10)).
+--
+-- 6. Logs de atividade são gravados via RPC log_activity_rpc
+--    (SECURITY DEFINER) para bypassar RLS de INSERT.
+

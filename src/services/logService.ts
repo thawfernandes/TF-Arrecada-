@@ -19,32 +19,26 @@ export const logService = {
     adminId?: string
   ): Promise<void> {
     try {
-      // Tentar obter IP se no client-side (opcional)
-      let ipAddress = 'client-side';
-      try {
-        // Apenas um placeholder ou chamada rápida de ipify se necessário,
-        // mas manter local e rápido para evitar chamadas lentas bloqueantes.
-      } catch (e) {
-        // Ignora falha de obter IP
-      }
-
-      const { error } = await supabase.from('activity_logs').insert({
-        client_id: clientId || null,
-        admin_id: adminId || null,
-        action,
-        entity_type: entityType || null,
-        entity_id: entityId || null,
-        details: details || {},
-        ip_address: ipAddress,
+      // Usar RPC SECURITY DEFINER para bypassar RLS (anon key não tem acesso direto)
+      const { error } = await supabase.rpc('log_activity_rpc', {
+        p_action: action,
+        p_entity_type: entityType || null,
+        p_entity_id: entityId || null,
+        p_details: details || {},
+        p_client_id: clientId || null,
+        p_admin_id: adminId || null,
+        p_ip_address: 'client-side',
       });
 
       if (error) {
-        console.error('Falha ao gravar log de atividade:', error);
+        // Log silencioso — não interrompe o fluxo principal
+        console.warn('Log de atividade não registrado:', error.message);
       }
     } catch (err) {
-      console.error('Erro no logService.logActivity:', err);
+      console.warn('Erro no logService.logActivity:', err);
     }
   },
+
 
   /**
    * Busca os logs de um cliente específico.
