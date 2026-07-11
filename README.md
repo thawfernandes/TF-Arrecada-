@@ -143,4 +143,5 @@ Configure as variáveis de ambiente no painel da Vercel. O React Router funciona
 
 ---
 
-## ⚡ Produzido pela TF
+## ⚡ Produzido pela TF - Versão 1.0.0
+
