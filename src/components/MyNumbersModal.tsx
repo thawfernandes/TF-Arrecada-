@@ -16,8 +16,10 @@ interface MyNumbersModalProps {
 }
 
 export function MyNumbersModal({ isOpen, onClose, initialPhone = '' }: MyNumbersModalProps) {
-  const [phone, setPhone] = useState(phone => phone || initialPhone);
+  const [phone, setPhone] = useState(initialPhone);
   const [results, setResults] = useState<MyNumberResult[]>([]);
+
+
   const [searched, setSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
