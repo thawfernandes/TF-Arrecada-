@@ -3,16 +3,30 @@
 // Interface Premium, Minimalista e Exclusiva para Clientes TF Hub
 // ============================================================
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Key, Sparkles, MessageSquare } from 'lucide-react';
 import { Logo } from '../components/Logo';
 import { Layout } from '../components/Layout';
 import { Modal } from '../components/Modal';
+import { useAuth } from '../hooks/useAuth';
 
 export function HomePage() {
   const navigate = useNavigate();
+  const { isAuthenticated, client, isLoading } = useAuth();
   const [isAccessModalOpen, setIsAccessModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && client) {
+      if (client.license_status === 'expired' || client.license_status === 'blocked') {
+        navigate('/licenca-expirada', { replace: true });
+      } else if (!client.onboarding_completed) {
+        navigate('/onboarding', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
+    }
+  }, [isLoading, isAuthenticated, client, navigate]);
 
   const instagramUrl = 'https://www.instagram.com/tfhub.design?igsh=MXM4ZXdndjZkdGxxbQ==';
 
