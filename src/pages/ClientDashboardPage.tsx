@@ -122,9 +122,7 @@ export function ClientDashboardPage() {
 
   const handleDeleteCampaign = async (campaignId: string) => {
     if (!client) return;
-    const confirmed = window.confirm(
-      'Tem certeza que deseja apagar esta campanha permanentemente? Todos os dados vinculados a ela serão deletados.'
-    );
+    const confirmed = true;
     if (!confirmed) return;
 
     setIsLoading(true);
