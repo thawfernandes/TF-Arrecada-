@@ -53,8 +53,8 @@ export function CreateCampaignModal({ isOpen, onClose, clientId, onSuccess }: Cr
       organizers.map((org, i) => {
         if (i !== index) return org;
         const updated = { ...org, [key]: value };
-        if (key === 'phone' && !org.whatsapp) {
-          updated.whatsapp = value; // Sincroniza whatsapp com telefone se estiver vazio
+        if (key === 'phone') {
+          updated.whatsapp = value; // Sincroniza whatsapp com telefone
         }
         return updated;
       })

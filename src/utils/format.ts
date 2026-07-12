@@ -53,3 +53,14 @@ export function truncate(text: string, max: number): string {
   if (text.length <= max) return text;
   return `${text.slice(0, max)}...`;
 }
+
+/** Formata link do WhatsApp com DDI 55 padrão se não estiver presente */
+export function formatWhatsAppLink(phone: string, message?: string): string {
+  if (!phone) return '';
+  const cleanPhone = phone.replace(/\D/g, '');
+  // Se já começar com 55 e tiver tamanho de um celular brasileiro completo, mantém, senão adiciona 55
+  const finalPhone = cleanPhone.startsWith('55') && cleanPhone.length >= 12 ? cleanPhone : `55${cleanPhone}`;
+  const textParam = message ? `?text=${encodeURIComponent(message)}` : '';
+  return `https://wa.me/${finalPhone}${textParam}`;
+}
+

@@ -7,7 +7,7 @@ import { Check, Copy, Phone, X, MessageCircle } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Modal } from './Modal';
 import { campaignService } from '../services/campaignService';
-import { maskPhone } from '../utils/format';
+import { maskPhone, formatWhatsAppLink } from '../utils/format';
 import type { Campaign, CampaignNumber } from '../types';
 
 type View = 'form' | 'pix' | 'done' | 'warning';
@@ -107,17 +107,11 @@ export function ReserveModal({
     onClose();
   }
 
-  function formatWhatsAppLink(phone: string, message?: string): string {
-    const cleanPhone = phone.replace(/\D/g, '');
-    const finalPhone = cleanPhone.startsWith('55') && cleanPhone.length >= 12 ? cleanPhone : `55${cleanPhone}`;
-    const textParam = message ? `?text=${encodeURIComponent(message)}` : '';
-    return `https://wa.me/${finalPhone}${textParam}`;
-  }
-
   function getWhatsAppUrl(): string {
     if (!primaryOrg) return '';
     const text = `Olá! Gostaria de comprar o número ${number.number} na campanha "${campaign.name}". Meu nome é ${form.name.trim()}.`;
-    return formatWhatsAppLink(primaryOrg.whatsapp, text);
+    const waNumber = (primaryOrg.whatsapp && primaryOrg.whatsapp.replace(/\D/g, '').length >= 10) ? primaryOrg.whatsapp : primaryOrg.phone;
+    return formatWhatsAppLink(waNumber, text);
   }
 
   const titles: Record<View, string> = {
@@ -256,7 +250,7 @@ export function ReserveModal({
                     <span className="font-semibold text-neutral-700">{org.name}</span>
                     <span className="text-neutral-400">({org.role || 'Org'})</span>
                     <a
-                      href={formatWhatsAppLink(org.whatsapp)}
+                      href={formatWhatsAppLink((org.whatsapp && org.whatsapp.replace(/\D/g, '').length >= 10) ? org.whatsapp : org.phone)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-brand-600 font-semibold hover:underline ml-0.5"

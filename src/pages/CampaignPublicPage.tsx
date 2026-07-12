@@ -16,7 +16,7 @@ import { SEOHead } from '../components/SEOHead';
 import { NotFoundPage } from './NotFoundPage';
 import { useCampaign } from '../hooks/useCampaign';
 import { campaignService } from '../services/campaignService';
-import { formatCurrency, formatDate, maskPhone } from '../utils/format';
+import { formatCurrency, formatDate, maskPhone, formatWhatsAppLink } from '../utils/format';
 import type { CampaignNumber } from '../types';
 
 export function CampaignPublicPage() {
@@ -294,7 +294,7 @@ export function CampaignPublicPage() {
                       <Phone size={12} /> Ligar
                     </a>
                     <a
-                      href={`https://wa.me/55${org.whatsapp.replace(/\D/g, '')}`}
+                      href={formatWhatsAppLink((org.whatsapp && org.whatsapp.replace(/\D/g, '').length >= 10) ? org.whatsapp : org.phone)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-1 btn-secondary bg-emerald-50 text-emerald-700 hover:bg-emerald-100/75 border border-emerald-100 text-xs py-1.5 flex items-center justify-center gap-1"
