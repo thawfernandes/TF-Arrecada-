@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus, AlertCircle, Copy, Check,
-  TrendingUp, Users, DollarSign, RefreshCw, LogOut, CheckCircle, XCircle
+  TrendingUp, Users, DollarSign, RefreshCw, LogOut, CheckCircle, XCircle, Trash2
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getCampaignUrl } from '../utils/format';
@@ -50,6 +50,9 @@ export function ClientDashboardPage() {
           const calculatedStats = campaignService.getCampaignStats(fullDetails);
           setStats(calculatedStats);
         }
+      } else {
+        setSelectedCampaign(null);
+        setStats(null);
       }
     } catch (err) {
       console.error(err);
@@ -115,6 +118,29 @@ export function ClientDashboardPage() {
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDeleteCampaign = async (campaignId: string) => {
+    if (!client) return;
+    const confirmed = window.confirm(
+      'Tem certeza que deseja apagar esta campanha permanentemente? Todos os dados vinculados a ela serão deletados.'
+    );
+    if (!confirmed) return;
+
+    setIsLoading(true);
+    try {
+      const success = await campaignService.deleteCampaign(client.id, campaignId);
+      if (success) {
+        await fetchDashboardData();
+      } else {
+        alert('Erro ao excluir campanha.');
+      }
+    } catch (err) {
+      console.error('Erro ao deletar campanha:', err);
+      alert('Erro inesperado ao excluir campanha.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
 
@@ -245,6 +271,13 @@ export function ClientDashboardPage() {
                       title="Copiar Link de Compartilhamento"
                     >
                       {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCampaign(selectedCampaign.id)}
+                      className="p-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-colors"
+                      title="Excluir Campanha"
+                    >
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>

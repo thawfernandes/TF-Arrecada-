@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { Plus, Trash, Calendar, DollarSign, ListOrdered } from 'lucide-react';
 import { campaignService } from '../services/campaignService';
 import { Modal } from './Modal';
+import { ImageUpload } from './ImageUpload';
 
 interface CreateCampaignModalProps {
   isOpen: boolean;
@@ -148,15 +149,13 @@ export function CreateCampaignModal({ isOpen, onClose, clientId, onSuccess }: Cr
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-neutral-700 mb-1">
-              Imagem de Capa (URL)
+            <label className="block text-xs font-semibold text-neutral-700 mb-2">
+              Imagem de Capa
             </label>
-            <input
-              type="url"
-              placeholder="https://... (link de imagem opcional)"
-              className="input-field"
+            <ImageUpload
               value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
+              onChange={(base64) => setImageUrl(base64)}
+              onClear={() => setImageUrl('')}
             />
           </div>
 

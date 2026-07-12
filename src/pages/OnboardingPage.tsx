@@ -11,6 +11,7 @@ import { campaignService } from '../services/campaignService';
 import { useAuth } from '../hooks/useAuth';
 import { getCampaignUrl } from '../utils/format';
 import { Layout } from '../components/Layout';
+import { ImageUpload } from '../components/ImageUpload';
 
 
 export function OnboardingPage() {
@@ -272,13 +273,14 @@ export function OnboardingPage() {
                   value={campDesc}
                   onChange={(e) => setCampDesc(e.target.value)}
                 />
-                <input
-                  type="url"
-                  placeholder="URL da Imagem da Campanha (opcional)"
-                  className="input-field"
-                  value={campImageUrl}
-                  onChange={(e) => setCampImageUrl(e.target.value)}
-                />
+                <div>
+                  <label className="block text-xxs font-bold text-neutral-500 mb-2">IMAGEM DA CAMPANHA (OPCIONAL)</label>
+                  <ImageUpload
+                    value={campImageUrl}
+                    onChange={(base64) => setCampImageUrl(base64)}
+                    onClear={() => setCampImageUrl('')}
+                  />
+                </div>
                 <div>
                   <label className="block text-xxs font-bold text-neutral-500 mb-1">PREÇO DO NÚMERO (R$)</label>
                   <input
