@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus, AlertCircle, Copy, Check,
-  TrendingUp, Users, DollarSign, RefreshCw, LogOut, CheckCircle, XCircle, Trash2
+  TrendingUp, Users, DollarSign, RefreshCw, LogOut, CheckCircle, XCircle, Trash2, ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getCampaignUrl } from '../utils/format';
@@ -263,6 +263,15 @@ export function ClientDashboardPage() {
                         Encerrar Campanha
                       </button>
                     )}
+                    <a
+                      href={getCampaignUrl(selectedCampaign.share_code)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2.5 bg-neutral-50 hover:bg-neutral-100 rounded-xl text-neutral-600 transition-colors flex items-center"
+                      title="Ver Campanha (abre em nova aba)"
+                    >
+                      <ExternalLink size={16} />
+                    </a>
                     <button
                       onClick={handleCopyLink}
                       className="p-2.5 bg-neutral-50 hover:bg-neutral-100 rounded-xl text-neutral-600 transition-colors"
