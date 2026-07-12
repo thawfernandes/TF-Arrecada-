@@ -42,6 +42,11 @@ export function maskPhone(value: string): string {
 
 /** Gera URL pública da campanha */
 export function getCampaignUrl(slug: string): string {
+  const customUrl = import.meta.env.VITE_PUBLIC_URL;
+  if (customUrl) {
+    const cleanUrl = customUrl.endsWith('/') ? customUrl.slice(0, -1) : customUrl;
+    return `${cleanUrl}/campanha/${slug}`;
+  }
   const base = import.meta.env.BASE_URL;
   const cleanBase = base.endsWith('/') ? base : `${base}/`;
   return `${window.location.origin}${cleanBase}campanha/${slug}`;

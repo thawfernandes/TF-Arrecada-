@@ -38,6 +38,7 @@ jobs:
           # Variáveis Supabase — configure nos Secrets do repositório para produção
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_PUBLIC_URL: https://thawfernandes.github.io/TF-Arrecada-
         run: npm run build
 
       - name: Setup Pages
