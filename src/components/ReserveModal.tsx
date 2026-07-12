@@ -107,11 +107,17 @@ export function ReserveModal({
     onClose();
   }
 
+  function formatWhatsAppLink(phone: string, message?: string): string {
+    const cleanPhone = phone.replace(/\D/g, '');
+    const finalPhone = cleanPhone.startsWith('55') && cleanPhone.length >= 12 ? cleanPhone : `55${cleanPhone}`;
+    const textParam = message ? `?text=${encodeURIComponent(message)}` : '';
+    return `https://wa.me/${finalPhone}${textParam}`;
+  }
+
   function getWhatsAppUrl(): string {
     if (!primaryOrg) return '';
-    const cleanPhone = primaryOrg.whatsapp.replace(/\D/g, '');
     const text = `Olá! Gostaria de comprar o número ${number.number} na campanha "${campaign.name}". Meu nome é ${form.name.trim()}.`;
-    return `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(text)}`;
+    return formatWhatsAppLink(primaryOrg.whatsapp, text);
   }
 
   const titles: Record<View, string> = {
@@ -250,7 +256,7 @@ export function ReserveModal({
                     <span className="font-semibold text-neutral-700">{org.name}</span>
                     <span className="text-neutral-400">({org.role || 'Org'})</span>
                     <a
-                      href={`https://wa.me/55${org.whatsapp.replace(/\D/g, '')}`}
+                      href={formatWhatsAppLink(org.whatsapp)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-brand-600 font-semibold hover:underline ml-0.5"
