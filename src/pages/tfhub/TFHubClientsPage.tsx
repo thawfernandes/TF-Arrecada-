@@ -25,6 +25,11 @@ export function TFHubClientsPage() {
   const [newPhone, setNewPhone] = useState('');
   const [newDays, setNewDays] = useState(30);
 
+  // Estados de renovação de licença
+  const [isRenewOpen, setIsRenewOpen] = useState(false);
+  const [renewClientId, setRenewClientId] = useState<string | null>(null);
+  const [renewDays, setRenewDays] = useState(30);
+
   const fetchClients = async () => {
     setIsLoading(true);
     try {
@@ -74,12 +79,18 @@ export function TFHubClientsPage() {
     }
   };
 
-  const handleRenew = async (clientId: string) => {
-    const confirm = window.confirm('Deseja renovar a licença deste cliente por mais 30 dias?');
-    if (!confirm) return;
+  const handleRenew = (clientId: string) => {
+    setRenewClientId(clientId);
+    setRenewDays(30);
+    setIsRenewOpen(true);
+  };
 
-    const res = await tfhubService.renewLicense(clientId, 30);
+  const handleRenewConfirm = async () => {
+    if (!renewClientId) return;
+    const res = await tfhubService.renewLicense(renewClientId, renewDays);
     if (res.success) {
+      setIsRenewOpen(false);
+      setRenewClientId(null);
       fetchClients();
     } else {
       alert('Falha ao renovar licença.');
@@ -200,7 +211,17 @@ export function TFHubClientsPage() {
                           <span className={`block font-bold ${isExpired ? 'text-red-400' : 'text-neutral-300'}`}>
                             {new Date(c.expires_at).toLocaleDateString()}
                           </span>
-                          <span className="text-[10px] text-neutral-500">Licença de 30 dias</span>
+                          <span className="text-[10px] text-neutral-500">
+                            {(() => {
+                              const diffDays = Math.round(
+                                (new Date(c.expires_at).getTime() - new Date(c.activated_at || c.created_at).getTime())
+                                / (1000 * 60 * 60 * 24)
+                              );
+                              if (diffDays >= 360) return '1 ano';
+                              if (diffDays >= 80) return `${Math.round(diffDays / 30)} meses`;
+                              return `${diffDays} dias`;
+                            })()}
+                          </span>
                         </td>
                         <td className="p-4">
                           <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
@@ -214,7 +235,7 @@ export function TFHubClientsPage() {
                           <button
                             onClick={() => handleRenew(c.id)}
                             className="p-2 bg-neutral-800 hover:bg-neutral-700 text-green-400 rounded-xl transition-colors"
-                            title="Renovar Licença (30 dias)"
+                            title="Renovar Licença"
                           >
                             <RefreshCw size={14} />
                           </button>
@@ -350,6 +371,44 @@ export function TFHubClientsPage() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal Renovar Licença */}
+      <Modal isOpen={isRenewOpen} onClose={() => setIsRenewOpen(false)} title="Renovar Licença">
+        <div className="space-y-4">
+          <p className="text-xs text-neutral-400">
+            Selecione o período de renovação a ser adicionado à licença atual do cliente.
+          </p>
+          <div>
+            <label className="block text-xs font-semibold text-neutral-400 mb-1">Período de Renovação</label>
+            <select
+              className="input-field bg-neutral-900 border-neutral-800 text-white focus:border-neutral-700"
+              value={renewDays}
+              onChange={(e) => setRenewDays(Number(e.target.value))}
+            >
+              <option value={30}>30 dias</option>
+              <option value={60}>60 dias</option>
+              <option value={90}>90 dias</option>
+              <option value={365}>1 ano (365 dias)</option>
+            </select>
+          </div>
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-neutral-800">
+            <button
+              type="button"
+              onClick={() => setIsRenewOpen(false)}
+              className="px-4 py-2 text-xs font-bold text-neutral-400 hover:text-white"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleRenewConfirm}
+              className="px-4 py-2 bg-white text-neutral-900 hover:bg-neutral-200 rounded-xl text-xs font-bold shadow-md"
+            >
+              Confirmar Renovação
+            </button>
+          </div>
+        </div>
       </Modal>
     </TFHubLayout>
   );

@@ -7,11 +7,15 @@ import { useState, useEffect } from 'react';
 import { ShieldCheck, ShieldAlert, RefreshCw } from 'lucide-react';
 import { tfhubService } from '../../services/tfhubService';
 import { TFHubLayout } from './TFHubLayout';
+import { Modal } from '../../components/Modal';
 
 export function TFHubLicensesPage() {
   const [clients, setClients] = useState<any[]>([]);
   const [filter, setFilter] = useState<'all' | 'active' | 'expired' | 'expiring'>('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [isRenewOpen, setIsRenewOpen] = useState(false);
+  const [renewClientId, setRenewClientId] = useState<string | null>(null);
+  const [renewDays, setRenewDays] = useState(30);
 
   const fetchClients = async () => {
     setIsLoading(true);
@@ -29,12 +33,18 @@ export function TFHubLicensesPage() {
     fetchClients();
   }, []);
 
-  const handleRenew = async (clientId: string) => {
-    const confirm = window.confirm('Deseja renovar esta licença por 30 dias adicionais?');
-    if (!confirm) return;
+  const handleRenew = (clientId: string) => {
+    setRenewClientId(clientId);
+    setRenewDays(30);
+    setIsRenewOpen(true);
+  };
 
-    const res = await tfhubService.renewLicense(clientId, 30);
+  const handleRenewConfirm = async () => {
+    if (!renewClientId) return;
+    const res = await tfhubService.renewLicense(renewClientId, renewDays);
     if (res.success) {
+      setIsRenewOpen(false);
+      setRenewClientId(null);
       fetchClients();
     } else {
       alert('Erro ao renovar a licença.');
@@ -146,7 +156,7 @@ export function TFHubLicensesPage() {
                             className="py-1.5 px-3 bg-neutral-800 hover:bg-neutral-700 text-green-400 rounded-xl transition-all font-bold text-[10px] flex items-center gap-1 ml-auto"
                           >
                             <RefreshCw size={10} />
-                            Renovar 30d
+                            Renovar
                           </button>
                         </td>
                       </tr>
@@ -159,6 +169,44 @@ export function TFHubLicensesPage() {
         )}
 
       </div>
+
+      {/* Modal Renovar Licença */}
+      <Modal isOpen={isRenewOpen} onClose={() => setIsRenewOpen(false)} title="Renovar Licença">
+        <div className="space-y-4">
+          <p className="text-xs text-neutral-400">
+            Selecione o período de renovação a ser adicionado à licença atual do cliente.
+          </p>
+          <div>
+            <label className="block text-xs font-semibold text-neutral-400 mb-1">Período de Renovação</label>
+            <select
+              className="input-field bg-neutral-900 border-neutral-800 text-white focus:border-neutral-700"
+              value={renewDays}
+              onChange={(e) => setRenewDays(Number(e.target.value))}
+            >
+              <option value={30}>30 dias</option>
+              <option value={60}>60 dias</option>
+              <option value={90}>90 dias</option>
+              <option value={365}>1 ano (365 dias)</option>
+            </select>
+          </div>
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-neutral-800">
+            <button
+              type="button"
+              onClick={() => setIsRenewOpen(false)}
+              className="px-4 py-2 text-xs font-bold text-neutral-400 hover:text-white"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleRenewConfirm}
+              className="px-4 py-2 bg-white text-neutral-900 hover:bg-neutral-200 rounded-xl text-xs font-bold shadow-md"
+            >
+              Confirmar Renovação
+            </button>
+          </div>
+        </div>
+      </Modal>
     </TFHubLayout>
   );
 }
