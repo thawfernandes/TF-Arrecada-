@@ -45,6 +45,10 @@ export function CreateCampaignModal({ isOpen, onClose, clientId, onSuccess }: Cr
 
   const removeOrganizer = (index: number) => {
     if (organizers[index].is_primary) return; // não remove o principal
+    const confirmed = window.confirm(
+      'Isso vai excluir este organizador permanentemente. Deseja continuar?'
+    );
+    if (!confirmed) return;
     setOrganizers(organizers.filter((_, i) => i !== index));
   };
 
