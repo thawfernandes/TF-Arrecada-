@@ -6,12 +6,13 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Calendar, DollarSign, Hash, Users,
-  ChevronDown, ChevronUp, Phone, MessageCircle
+  ChevronDown, ChevronUp, Phone, MessageCircle, Dices
 } from 'lucide-react';
 import { Layout } from '../components/Layout';
 import { NumberGrid } from '../components/NumberGrid';
 import { ReserveModal } from '../components/ReserveModal';
 import { MyNumbersModal } from '../components/MyNumbersModal';
+import { DrawModal } from '../components/DrawModal';
 import { SEOHead } from '../components/SEOHead';
 import { NotFoundPage } from './NotFoundPage';
 import { useCampaign } from '../hooks/useCampaign';
@@ -29,6 +30,7 @@ export function CampaignPublicPage() {
   const [selectedNumber, setSelectedNumber] = useState<CampaignNumber | null>(null);
   const [showRules, setShowRules] = useState(false);
   const [isMyNumbersOpen, setIsMyNumbersOpen] = useState(false);
+  const [isDrawOpen, setIsDrawOpen] = useState(false);
   
   // Estados da pesquisa rápida local por telefone
   const [searchPhone, setSearchPhone] = useState('');
@@ -330,9 +332,30 @@ export function CampaignPublicPage() {
             )}
           </div>
         )}
+
+        {/* ── Botão de Sorteio ────────────────────── */}
+        {stats.paid > 0 && (
+          <div className="card p-5 text-center space-y-3">
+            <p className="text-sm font-bold text-neutral-800">🎲 Realizar Sorteio</p>
+            <p className="text-xs text-neutral-500">
+              {stats.paid} número{stats.paid !== 1 ? 's' : ''} pago{stats.paid !== 1 ? 's' : ''} elegíve{stats.paid !== 1 ? 'is' : 'l'} para o sorteio.
+            </p>
+            <button
+              onClick={() => setIsDrawOpen(true)}
+              className="w-full py-3 rounded-2xl font-bold text-white text-sm transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+              style={{
+                background: 'linear-gradient(135deg, #7c3aed 0%, #db2777 100%)',
+                boxShadow: '0 4px 20px rgba(124,58,237,0.3)',
+              }}
+            >
+              <Dices size={16} />
+              Sortear Ganhador
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* ── Modal de reserva ────────────────────────────────── */}
+      {/* ── Modal de reserva ──────────────────────────────────────────── */}
       {selectedNumber && (
         <ReserveModal
           isOpen
@@ -343,11 +366,19 @@ export function CampaignPublicPage() {
         />
       )}
 
-      {/* ── Modal de Consulta Global "Meus Números" ────────── */}
+      {/* ── Modal de Consulta Global "Meus Números" ──────────── */}
       <MyNumbersModal
         isOpen={isMyNumbersOpen}
         onClose={() => setIsMyNumbersOpen(false)}
         initialPhone={searchPhone}
+      />
+
+      {/* ── Modal de Sorteio ──────────────────────────────────── */}
+      <DrawModal
+        isOpen={isDrawOpen}
+        onClose={() => setIsDrawOpen(false)}
+        paidNumbers={campaign.numbers?.filter((n) => n.status === 'paid') ?? []}
+        campaignName={campaign.name}
       />
     </Layout>
   );

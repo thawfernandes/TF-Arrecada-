@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus, AlertCircle, Copy, Check,
-  TrendingUp, Users, DollarSign, RefreshCw, LogOut, CheckCircle, XCircle, Trash2, ExternalLink
+  TrendingUp, Users, DollarSign, RefreshCw, LogOut, CheckCircle, XCircle, Trash2, ExternalLink, Dices
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getCampaignUrl } from '../utils/format';
@@ -15,6 +15,7 @@ import { getCampaignUrl } from '../utils/format';
 import { campaignService } from '../services/campaignService';
 import { LicenseWarningBanner } from '../components/LicenseWarningBanner';
 import { CreateCampaignModal } from '../components/CreateCampaignModal';
+import { DrawModal } from '../components/DrawModal';
 import { Layout } from '../components/Layout';
 import { Logo } from '../components/Logo';
 import type { Campaign, CampaignStats } from '../types';
@@ -29,6 +30,7 @@ export function ClientDashboardPage() {
   const [copied, setCopied] = useState(false);
   
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isDrawOpen, setIsDrawOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchDashboardData = async () => {
@@ -263,6 +265,14 @@ export function ClientDashboardPage() {
                         Encerrar Campanha
                       </button>
                     )}
+                    {/* Botão de Sorteio */}
+                    <button
+                      onClick={() => setIsDrawOpen(true)}
+                      className="p-2.5 bg-purple-50 hover:bg-purple-100 text-purple-600 rounded-xl transition-colors"
+                      title="Realizar Sorteio"
+                    >
+                      <Dices size={16} />
+                    </button>
                     <a
                       href={getCampaignUrl(selectedCampaign.share_code)}
                       target="_blank"
@@ -398,6 +408,14 @@ export function ClientDashboardPage() {
         onClose={() => setIsCreateModalOpen(false)}
         clientId={client?.id || ''}
         onSuccess={fetchDashboardData}
+      />
+
+      {/* Modal de Sorteio */}
+      <DrawModal
+        isOpen={isDrawOpen}
+        onClose={() => setIsDrawOpen(false)}
+        paidNumbers={selectedCampaign?.numbers?.filter((n) => n.status === 'paid') ?? []}
+        campaignName={selectedCampaign?.name}
       />
     </Layout>
   );
