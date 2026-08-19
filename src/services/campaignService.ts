@@ -386,6 +386,30 @@ export const campaignService = {
   },
 
   /**
+   * Reverte um número pago de volta para reservado.
+   */
+  async revertToReserved(clientId: string, campaignNumberId: string): Promise<boolean> {
+    const { data: updatedNum, error } = await supabase
+      .from('campaign_numbers')
+      .update({
+        status: 'reserved',
+        paid_at: null,
+      })
+      .eq('id', campaignNumberId)
+      .eq('status', 'paid')
+      .select()
+      .single();
+
+    if (error || !updatedNum) {
+      console.error('Erro ao reverter para reservado:', error);
+      return false;
+    }
+
+    await logService.logActivity('revert', 'campaign_numbers', campaignNumberId, { number: updatedNum.number }, clientId);
+    return true;
+  },
+
+  /**
    * Cancela uma reserva, voltando o número ao status disponível.
    */
   async cancelReservation(clientId: string, campaignNumberId: string): Promise<boolean> {

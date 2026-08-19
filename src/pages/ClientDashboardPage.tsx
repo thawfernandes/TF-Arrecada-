@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus, AlertCircle, Copy, Check,
-  TrendingUp, Users, DollarSign, RefreshCw, LogOut, CheckCircle, XCircle, Trash2, ExternalLink, Dices
+  TrendingUp, Users, DollarSign, RefreshCw, LogOut, CheckCircle, XCircle, Trash2, ExternalLink, Dices, Undo2
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getCampaignUrl } from '../utils/format';
@@ -95,6 +95,14 @@ export function ClientDashboardPage() {
   const handleCancelReservation = async (numberId: string) => {
     if (!client || !selectedCampaign) return;
     const success = await campaignService.cancelReservation(client.id, numberId);
+    if (success) {
+      handleSelectCampaign(selectedCampaign.id);
+    }
+  };
+
+  const handleRevertToReserved = async (numberId: string) => {
+    if (!client || !selectedCampaign) return;
+    const success = await campaignService.revertToReserved(client.id, numberId);
     if (success) {
       handleSelectCampaign(selectedCampaign.id);
     }
@@ -419,6 +427,15 @@ export function ClientDashboardPage() {
                                   title="Confirmar Pagamento"
                                 >
                                   <CheckCircle size={18} />
+                                </button>
+                              )}
+                              {n.status === 'paid' && (
+                                <button
+                                  onClick={() => handleRevertToReserved(n.id)}
+                                  className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
+                                  title="Reverter para Reservado"
+                                >
+                                  <Undo2 size={18} />
                                 </button>
                               )}
                               <button

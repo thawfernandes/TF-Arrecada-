@@ -27,6 +27,7 @@ export type LogAction =
   | 'reserve'
   | 'cancel'
   | 'payment'
+  | 'revert'
   | 'license_renew';
 
 // ─── Client (Auth própria) ────────────────────────────────────
