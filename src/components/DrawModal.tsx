@@ -3,8 +3,8 @@
 // Sorteio animado com contagem regressiva 3, 2, 1 + revelação
 // ============================================================
 
-import { useState, useEffect, useCallback } from 'react';
-import { Trophy, X, RotateCcw, Sparkles } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Trophy, X, RotateCcw, Sparkles, Dices } from 'lucide-react';
 
 interface DrawWinner {
   number: number;
@@ -29,66 +29,72 @@ interface DrawModalProps {
   campaignName?: string;
 }
 
-type DrawPhase = 'idle' | 'countdown-3' | 'countdown-2' | 'countdown-1' | 'reveal';
+type DrawPhase = 'idle' | 'counting' | 'reveal';
 
 export function DrawModal({ isOpen, onClose, paidNumbers, campaignName }: DrawModalProps) {
-  const [phase, setPhase] = useState<DrawPhase>('idle');
-  const [winner, setWinner] = useState<DrawWinner | null>(null);
+  const [phase, setPhase]         = useState<DrawPhase>('idle');
+  const [countdown, setCountdown] = useState(3);
+  const [winner, setWinner]       = useState<DrawWinner | null>(null);
   const [shuffleNum, setShuffleNum] = useState<number | null>(null);
 
-  const eligible = paidNumbers.filter((n) => n.buyer?.name);
+  // Ref estável — não causa re-renders nem invalida o useEffect
+  const eligibleRef = useRef<DrawableNumber[]>([]);
 
-  const pickWinner = useCallback(() => {
-    const picked = eligible[Math.floor(Math.random() * eligible.length)];
-    return {
-      number: picked.number,
-      name: picked.buyer!.name,
-      phone: picked.buyer!.phone,
-      city: picked.buyer?.city,
-    };
-  }, [eligible]);
+  const paidEligible = paidNumbers.filter((n) => n.buyer?.name);
 
-  // Máquina de estados da contagem
+  // ── Máquina da contagem ────────────────────────────────────
+  // Depende apenas de [phase, countdown] — sem arrays derivados
   useEffect(() => {
-    if (phase === 'idle' || phase === 'reveal') return;
+    if (phase !== 'counting') return;
 
-    // Shuffle rápido de números durante a contagem
+    const eligible = eligibleRef.current; // lê da ref, nunca muda
+
+    // Shuffle rápido de números enquanto o dígito aparece
     const shuffleId = setInterval(() => {
       const rnd = eligible[Math.floor(Math.random() * eligible.length)];
       setShuffleNum(rnd?.number ?? null);
     }, 90);
 
-    const next: Record<Exclude<DrawPhase, 'idle' | 'reveal'>, DrawPhase> = {
-      'countdown-3': 'countdown-2',
-      'countdown-2': 'countdown-1',
-      'countdown-1': 'reveal',
-    };
-
+    // Avança após 1 segundo
     const timerId = setTimeout(() => {
       clearInterval(shuffleId);
-      const nextPhase = next[phase as keyof typeof next];
-      if (nextPhase === 'reveal') {
-        setWinner(pickWinner());
+
+      if (countdown > 1) {
+        // Próximo dígito
+        setCountdown((c) => c - 1);
+      } else {
+        // Chegou ao fim — sorteia vencedor
+        const picked = eligible[Math.floor(Math.random() * eligible.length)];
+        setWinner({
+          number: picked.number,
+          name:   picked.buyer!.name,
+          phone:  picked.buyer!.phone,
+          city:   picked.buyer?.city,
+        });
         setShuffleNum(null);
+        setPhase('reveal');
       }
-      setPhase(nextPhase);
     }, 1000);
 
     return () => {
       clearTimeout(timerId);
       clearInterval(shuffleId);
     };
-  }, [phase, eligible, pickWinner]);
+  }, [phase, countdown]); // ← SEM eligible aqui
 
+  // ── Ações ──────────────────────────────────────────────────
   const startDraw = () => {
-    if (eligible.length === 0) return;
+    if (paidEligible.length === 0) return;
+    eligibleRef.current = paidEligible; // grava uma vez antes de começar
     setWinner(null);
     setShuffleNum(null);
-    setPhase('countdown-3');
+    setCountdown(3);
+    setPhase('counting');
   };
 
   const reset = () => {
     setPhase('idle');
+    setCountdown(3);
     setWinner(null);
     setShuffleNum(null);
   };
@@ -100,20 +106,12 @@ export function DrawModal({ isOpen, onClose, paidNumbers, campaignName }: DrawMo
 
   if (!isOpen) return null;
 
-  const countdownDigit: Partial<Record<DrawPhase, string>> = {
-    'countdown-3': '3',
-    'countdown-2': '2',
-    'countdown-1': '1',
-  };
-
-  const isCountdown = phase.startsWith('countdown');
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm animate-fade-in">
       <div className="relative w-full max-w-sm mx-4">
 
-        {/* Botão fechar — visível em idle e reveal */}
-        {!isCountdown && (
+        {/* Fechar — só fora da contagem */}
+        {phase !== 'counting' && (
           <button
             onClick={handleClose}
             className="absolute -top-10 right-0 text-white/50 hover:text-white transition-colors"
@@ -125,63 +123,65 @@ export function DrawModal({ isOpen, onClose, paidNumbers, campaignName }: DrawMo
 
         <div className="bg-neutral-950 rounded-3xl overflow-hidden border border-neutral-800 shadow-2xl">
 
-          {/* ── Cabeçalho ─────────────────────────────────── */}
+          {/* ── Cabeçalho ──────────────────────────────────── */}
           <div
             className="p-5 text-center"
-            style={{
-              background: 'linear-gradient(135deg, #4c1d95 0%, #831843 100%)',
-            }}
+            style={{ background: 'linear-gradient(135deg, #4c1d95 0%, #831843 100%)' }}
           >
             <Trophy size={28} className="text-yellow-400 mx-auto mb-1.5" />
             <h2 className="text-white font-bold text-base leading-tight">
               {campaignName ? `Sorteio: ${campaignName}` : 'Sorteio da Rifa'}
             </h2>
             <p className="text-white/50 text-[11px] mt-0.5">
-              {eligible.length} número{eligible.length !== 1 ? 's' : ''} elegível{eligible.length !== 1 ? 'is' : ''}
+              {paidEligible.length} número{paidEligible.length !== 1 ? 's' : ''} elegível{paidEligible.length !== 1 ? 'is' : ''}
             </p>
           </div>
 
-          {/* ── Corpo ─────────────────────────────────────── */}
+          {/* ── Corpo ──────────────────────────────────────── */}
           <div className="p-8 text-center min-h-[220px] flex flex-col items-center justify-center">
 
-            {/* Estado: IDLE */}
+            {/* IDLE */}
             {phase === 'idle' && (
               <div className="space-y-5 w-full">
-                {eligible.length === 0 ? (
+                {paidEligible.length === 0 ? (
                   <p className="text-neutral-500 text-sm">
                     Nenhum número pago ainda.<br />
-                    <span className="text-neutral-600 text-xs">Confirme pagamentos para habilitar o sorteio.</span>
+                    <span className="text-neutral-600 text-xs">
+                      Confirme pagamentos para habilitar o sorteio.
+                    </span>
                   </p>
                 ) : (
                   <>
                     <p className="text-neutral-400 text-sm leading-relaxed">
                       Serão elegíveis os{' '}
-                      <strong className="text-white">{eligible.length}</strong>{' '}
+                      <strong className="text-white">{paidEligible.length}</strong>{' '}
                       números pagos.
                     </p>
                     <button
                       onClick={startDraw}
-                      className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all hover:scale-105 active:scale-95 shadow-lg"
+                      className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all hover:scale-105 active:scale-95 shadow-lg flex items-center justify-center gap-2"
                       style={{
                         background: 'linear-gradient(135deg, #7c3aed 0%, #db2777 100%)',
                         boxShadow: '0 0 30px rgba(124,58,237,0.4)',
                       }}
                     >
-                      🎲 Sortear Agora!
+                      <Dices size={20} />
+                      Sortear Agora!
                     </button>
                   </>
                 )}
               </div>
             )}
 
-            {/* Estado: CONTAGEM */}
-            {isCountdown && (
+            {/* CONTAGEM */}
+            {phase === 'counting' && (
               <div className="space-y-3">
                 <div
-                  className="text-[96px] font-black text-white leading-none animate-pulse select-none"
+                  key={countdown} // força re-mount a cada dígito → animação limpa
+                  className="text-[96px] font-black text-white leading-none select-none animate-bounce"
                   style={{ textShadow: '0 0 60px rgba(168,85,247,0.9)' }}
                 >
-                  {countdownDigit[phase]}
+                  {countdown}
                 </div>
                 {shuffleNum !== null && (
                   <div
@@ -195,12 +195,11 @@ export function DrawModal({ isOpen, onClose, paidNumbers, campaignName }: DrawMo
               </div>
             )}
 
-            {/* Estado: VENCEDOR */}
+            {/* REVELAÇÃO */}
             {phase === 'reveal' && winner && (
               <div className="w-full space-y-5 animate-fade-in">
                 <div className="text-5xl">🎉</div>
 
-                {/* Card do ganhador */}
                 <div
                   className="rounded-2xl p-5 space-y-3 border"
                   style={{
@@ -208,7 +207,6 @@ export function DrawModal({ isOpen, onClose, paidNumbers, campaignName }: DrawMo
                     borderColor: 'rgba(234,179,8,0.3)',
                   }}
                 >
-                  {/* Número */}
                   <div
                     className="text-5xl font-black text-yellow-400 tabular-nums"
                     style={{ textShadow: '0 0 30px rgba(234,179,8,0.6)' }}
@@ -227,7 +225,6 @@ export function DrawModal({ isOpen, onClose, paidNumbers, campaignName }: DrawMo
                   </div>
                 </div>
 
-                {/* Ações */}
                 <div className="flex gap-2.5">
                   <button
                     onClick={reset}
