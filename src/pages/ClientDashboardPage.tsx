@@ -32,6 +32,8 @@ export function ClientDashboardPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDrawOpen, setIsDrawOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [buyerSearch, setBuyerSearch] = useState('');
+  const [buyerFilter, setBuyerFilter] = useState<'all' | 'reserved' | 'paid'>('all');
 
   const fetchDashboardData = async () => {
     if (!client) return;
@@ -328,72 +330,110 @@ export function ClientDashboardPage() {
                   </div>
                 )}
 
-                {/* Reservas Pendentes */}
+                {/* Compradores — lista unificada */}
                 <div className="card p-6 bg-white border border-neutral-100/80 shadow-sm rounded-3xl space-y-4">
-                  <h3 className="text-sm font-bold text-neutral-800">Reservas Pendentes</h3>
-                  
-                  {selectedCampaign.numbers?.filter((n) => n.status === 'reserved').length === 0 ? (
-                    <p className="text-xs text-neutral-400 text-center py-6">Nenhuma reserva aguardando confirmação.</p>
-                  ) : (
-                    <div className="divide-y divide-neutral-100">
-                      {selectedCampaign.numbers
-                        ?.filter((n) => n.status === 'reserved')
-                        .map((n) => (
-                          <div key={n.id} className="flex items-center justify-between py-3">
-                            <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <h3 className="text-sm font-bold text-neutral-800">Compradores</h3>
+                    <div className="flex items-center gap-2">
+                      {/* Filtros */}
+                      {(['all', 'reserved', 'paid'] as const).map((f) => (
+                        <button
+                          key={f}
+                          onClick={() => setBuyerFilter(f)}
+                          className={`px-3 py-1 rounded-lg text-xxs font-bold transition-all ${
+                            buyerFilter === f
+                              ? 'bg-neutral-900 text-white'
+                              : 'bg-neutral-100 text-neutral-500 hover:bg-neutral-200'
+                          }`}
+                        >
+                          {f === 'all' ? 'Todos' : f === 'reserved' ? 'Reservados' : 'Pagos'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Busca */}
+                  <input
+                    type="text"
+                    placeholder="Buscar por nome, número ou telefone…"
+                    className="w-full border border-neutral-200 rounded-xl px-3 py-2 text-xs font-medium text-neutral-800 placeholder-neutral-400 focus:outline-none focus:border-neutral-400"
+                    value={buyerSearch}
+                    onChange={(e) => setBuyerSearch(e.target.value)}
+                  />
+
+                  {(() => {
+                    const allBuyers = (selectedCampaign.numbers || [])
+                      .filter((n) => n.status === 'reserved' || n.status === 'paid')
+                      .filter((n) => buyerFilter === 'all' || n.status === buyerFilter)
+                      .filter((n) => {
+                        if (!buyerSearch) return true;
+                        const q = buyerSearch.toLowerCase();
+                        return (
+                          String(n.number).includes(q) ||
+                          n.buyer?.name?.toLowerCase().includes(q) ||
+                          n.buyer?.phone?.includes(q)
+                        );
+                      });
+
+                    if (allBuyers.length === 0) {
+                      return (
+                        <p className="text-xs text-neutral-400 text-center py-6">
+                          {buyerSearch || buyerFilter !== 'all'
+                            ? 'Nenhum comprador encontrado com esse filtro.'
+                            : 'Nenhum comprador ainda.'}
+                        </p>
+                      );
+                    }
+
+                    return (
+                      <div className="divide-y divide-neutral-100 max-h-96 overflow-y-auto">
+                        {allBuyers.map((n) => (
+                          <div key={n.id} className="flex items-center justify-between py-3 gap-3">
+                            <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-bold text-neutral-800">#{n.number}</span>
-                                <span className="text-xxs text-neutral-400">por {n.buyer?.name}</span>
+                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
+                                  n.status === 'paid'
+                                    ? 'bg-green-50 text-green-700'
+                                    : 'bg-amber-50 text-amber-700'
+                                }`}>
+                                  {n.status === 'paid' ? 'Pago' : 'Reservado'}
+                                </span>
                               </div>
-                              <span className="text-xxs text-neutral-400 font-medium block">
-                                Expira em: {n.reservation_expires_at ? new Date(n.reservation_expires_at).toLocaleTimeString() : 'N/A'}
+                              <span className="text-xxs text-neutral-600 font-medium block truncate">
+                                {n.buyer?.name || 'Sem nome'}
                               </span>
+                              {n.buyer?.phone && (
+                                <span className="text-xxs text-neutral-400 block">{n.buyer.phone}</span>
+                              )}
+                              {n.buyer?.city && (
+                                <span className="text-xxs text-neutral-400 block">{n.buyer.city}</span>
+                              )}
                             </div>
 
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => handleConfirmPayment(n.id)}
-                                className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                title="Confirmar Pagamento"
-                              >
-                                <CheckCircle size={18} />
-                              </button>
+                            <div className="flex items-center gap-1 shrink-0">
+                              {n.status === 'reserved' && (
+                                <button
+                                  onClick={() => handleConfirmPayment(n.id)}
+                                  className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                  title="Confirmar Pagamento"
+                                >
+                                  <CheckCircle size={18} />
+                                </button>
+                              )}
                               <button
                                 onClick={() => handleCancelReservation(n.id)}
-                                className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                title="Cancelar Reserva"
+                                className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                title={n.status === 'paid' ? 'Reverter para disponível' : 'Liberar número'}
                               >
                                 <XCircle size={18} />
                               </button>
                             </div>
                           </div>
                         ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Últimos Compradores */}
-                <div className="card p-6 bg-white border border-neutral-100/80 shadow-sm rounded-3xl space-y-4">
-                  <h3 className="text-sm font-bold text-neutral-800">Últimos Compradores</h3>
-                  
-                  {selectedCampaign.numbers?.filter((n) => n.status === 'paid').length === 0 ? (
-                    <p className="text-xs text-neutral-400 text-center py-6">Nenhum número pago ainda.</p>
-                  ) : (
-                    <div className="divide-y divide-neutral-100">
-                      {selectedCampaign.numbers
-                        ?.filter((n) => n.status === 'paid')
-                        .slice(0, 5)
-                        .map((n) => (
-                          <div key={n.id} className="flex items-center justify-between py-3">
-                            <div>
-                              <span className="text-xs font-bold text-neutral-800 block">Número #{n.number}</span>
-                              <span className="text-xxs text-neutral-400 font-medium">Nome: {n.buyer?.name || 'Anônimo'} | Telefone: {n.buyer?.phone}</span>
-                            </div>
-                            <span className="text-xxs font-bold text-green-600">PAGO</span>
-                          </div>
-                        ))}
-                    </div>
-                  )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
               </div>

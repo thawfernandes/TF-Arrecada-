@@ -270,8 +270,7 @@ export const campaignService = {
   async reserveNumber(
     campaignId: string,
     number: number,
-    buyer: { name: string; phone: string; city?: string; message?: string },
-    timeoutMinutes: number
+    buyer: { name: string; phone: string; city?: string; message?: string }
   ): Promise<{ success: boolean; error?: string; campaignNumber?: CampaignNumber }> {
     try {
       // 1. Obter registro do número e verificar status
@@ -286,31 +285,23 @@ export const campaignService = {
         return { success: false, error: 'number_not_found' };
       }
 
-      // Verificar expiração caso esteja reservado
+      // Verificar se já está reservado (sem expiração — só o admin libera)
       if (numRecord.status === 'reserved') {
-        const isExpired = new Date(numRecord.reservation_expires_at).getTime() < Date.now();
-        if (!isExpired) {
-          return { success: false, error: 'already_reserved' };
-        }
-        // Se expirou, podemos liberar e reservar para o novo usuário na mesma transação
+        return { success: false, error: 'already_reserved' };
       } else if (numRecord.status === 'paid') {
         return { success: false, error: 'already_paid' };
       }
 
-      // 2. Calcular data de expiração da reserva
-      const expiresAt = new Date(Date.now() + timeoutMinutes * 60 * 1000).toISOString();
-
-      // 3. Atualizar status do número com controle de concorrência sutil
-      // Adicionamos a cláusula no UPDATE para garantir que ninguém atualizou nesse meio tempo
+      // Atualizar status do número
       const { data: updatedNum, error: updateError } = await supabase
         .from('campaign_numbers')
         .update({
           status: 'reserved',
           reserved_at: new Date().toISOString(),
-          reservation_expires_at: expiresAt,
+          reservation_expires_at: null, // sem prazo de expiração
         })
         .eq('id', numRecord.id)
-        .or(`status.eq.available,reservation_expires_at.lt.${new Date().toISOString()}`)
+        .eq('status', 'available') // só atualiza se ainda estiver disponível
         .select()
         .single();
 

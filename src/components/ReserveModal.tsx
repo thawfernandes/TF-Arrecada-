@@ -70,8 +70,7 @@ export function ReserveModal({
           phone: form.phone,
           city: form.city.trim() || undefined,
           message: form.message.trim() || undefined,
-        },
-        campaign.reservation_timeout_minutes
+        }
       );
 
       if (res.success) {
